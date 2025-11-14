@@ -5,7 +5,7 @@ import type { ILogger } from '../Utils/logger'
 import type { AuthenticationState, LIDMapping, SignalAuthState, TransactionCapabilityOptions } from './Auth'
 import type { GroupMetadata } from './GroupMetadata'
 import { type MediaConnInfo, type WAMessageKey } from './Message'
-import type { SignalRepositoryWithLIDStore } from './Signal'
+import type { SignalRepository } from './Signal'
 
 export type WAVersion = [number, number, number]
 export type WABrowserDescription = [string, string, string]
@@ -142,9 +142,5 @@ export type SocketConfig = {
 	/** cached group metadata, use to prevent redundant requests to WA & speed up msg sending */
 	cachedGroupMetadata: (jid: string) => Promise<GroupMetadata | undefined>
 
-	makeSignalRepository: (
-		auth: SignalAuthState,
-		logger: ILogger,
-		pnToLIDFunc?: (jids: string[]) => Promise<LIDMapping[] | undefined>
-	) => SignalRepositoryWithLIDStore
+	makeSignalRepository: (auth: SignalAuthState) => SignalRepository
 }

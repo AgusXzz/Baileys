@@ -30,18 +30,17 @@ export class SenderKeyState {
 	constructor(
 		id?: number | null,
 		iteration?: number | null,
-		chainKey?: Uint8Array | null | string,
-		signatureKeyPair?: { public: Uint8Array | string; private: Uint8Array | string } | null,
-		signatureKeyPublic?: Uint8Array | string | null,
-		signatureKeyPrivate?: Uint8Array | string | null,
+		chainKey?: Uint8Array | null,
+		signatureKeyPair?: { public: Uint8Array; private: Uint8Array } | null,
+		signatureKeyPublic?: Uint8Array | null,
+		signatureKeyPrivate?: Uint8Array | null,
 		senderKeyStateStructure?: SenderKeyStateStructure | null
 	) {
 		if (senderKeyStateStructure) {
-			this.senderKeyStateStructure = {
-				...senderKeyStateStructure,
-				senderMessageKeys: Array.isArray(senderKeyStateStructure.senderMessageKeys)
-					? senderKeyStateStructure.senderMessageKeys
-					: []
+			if (!Array.isArray(senderKeyStateStructure.senderMessageKeys)) {
+				this.senderKeyStateStructure = { ...senderKeyStateStructure, senderMessageKeys: [] }
+			} else {
+				this.senderKeyStateStructure = senderKeyStateStructure
 			}
 		} else {
 			if (signatureKeyPair) {
@@ -49,16 +48,29 @@ export class SenderKeyState {
 				signatureKeyPrivate = signatureKeyPair.private
 			}
 
+			chainKey = typeof chainKey === 'string' ? Buffer.from(chainKey, 'base64') : chainKey
+
+			const senderChainKeyStructure: SenderChainKeyStructure = {
+				iteration: iteration || 0,
+				seed: chainKey || Buffer.alloc(0)
+			}
+
+			const signingKeyStructure: SenderSigningKeyStructure = {
+				public:
+					typeof signatureKeyPublic === 'string'
+						? Buffer.from(signatureKeyPublic, 'base64')
+						: signatureKeyPublic || Buffer.alloc(0)
+			}
+
+			if (signatureKeyPrivate) {
+				signingKeyStructure.private =
+					typeof signatureKeyPrivate === 'string' ? Buffer.from(signatureKeyPrivate, 'base64') : signatureKeyPrivate
+			}
+
 			this.senderKeyStateStructure = {
 				senderKeyId: id || 0,
-				senderChainKey: {
-					iteration: iteration || 0,
-					seed: Buffer.from(chainKey || [])
-				},
-				senderSigningKey: {
-					public: Buffer.from(signatureKeyPublic || []),
-					private: Buffer.from(signatureKeyPrivate || [])
-				},
+				senderChainKey: senderChainKeyStructure,
+				senderSigningKey: signingKeyStructure,
 				senderMessageKeys: []
 			}
 		}
@@ -83,20 +95,27 @@ export class SenderKeyState {
 	}
 
 	public getSigningKeyPublic(): Buffer {
-		const publicKey = Buffer.from(this.senderKeyStateStructure.senderSigningKey.public)
-
-		if (publicKey.length === 32) {
-			const fixed = Buffer.alloc(33)
-			fixed[0] = 0x05
-			publicKey.copy(fixed, 1)
-			return fixed
+		const publicKey = this.senderKeyStateStructure.senderSigningKey.public
+		if (publicKey instanceof Buffer) {
+			return publicKey
+		} else if (typeof publicKey === 'string') {
+			return Buffer.from(publicKey, 'base64')
 		}
 
-		return publicKey
+		return Buffer.from(publicKey || [])
 	}
 
 	public getSigningKeyPrivate(): Buffer | undefined {
 		const privateKey = this.senderKeyStateStructure.senderSigningKey.private
+		if (!privateKey) {
+			return undefined
+		}
+
+		if (privateKey instanceof Buffer) {
+			return privateKey
+		} else if (typeof privateKey === 'string') {
+			return Buffer.from(privateKey, 'base64')
+		}
 
 		return Buffer.from(privateKey || [])
 	}

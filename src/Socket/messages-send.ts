@@ -294,12 +294,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		const result = await sock.executeUSyncQuery(query)
 
 		if (result) {
-			// TODO: LID MAP this stuff (lid protocol will now return lid with devices)
-			const lidResults = result.list.filter(a => !!a.lid)
-			if (lidResults.length > 0) {
-				logger.trace('Storing LID maps from device call')
-				await signalRepository.lidMapping.storeLIDPNMappings(lidResults.map(a => ({ lid: a.lid as string, pn: a.id })))
-			}
 
 			const extracted = extractDeviceJids(
 				result?.list,
@@ -388,13 +382,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				if (cachedSession) {
 					continue // Session exists in cache
 				}
-			} else {
-				const sessionValidation = await signalRepository.validateSession(jid)
-				const hasSession = sessionValidation.exists
-				peerSessionsCache.set(signalId, hasSession)
-				if (hasSession) {
-					continue
-				}
 			}
 
 			jidsRequiringFetch.push(jid)
@@ -403,12 +390,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		if (jidsRequiringFetch.length) {
 			// LID if mapped, otherwise original
 			const wireJids = [
-				...jidsRequiringFetch.filter(jid => !!isLidUser(jid) || !!isHostedLidUser(jid)),
-				...(
-					(await signalRepository.lidMapping.getLIDsForPNs(
-						jidsRequiringFetch.filter(jid => !!isPnUser(jid) || !!isHostedPnUser(jid))
-					)) || []
-				).map(a => a.lid)
+				...jidsRequiringFetch.filter(jid => !!isLidUser(jid) || !!isHostedLidUser(jid))
 			]
 
 			logger.debug({ jidsRequiringFetch, wireJids }, 'fetching sessions')

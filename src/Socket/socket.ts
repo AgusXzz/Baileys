@@ -320,7 +320,7 @@ export const makeSocket = (config: SocketConfig) => {
 	const { creds } = authState
 	// add transaction capability
 	const keys = addTransactionCapability(authState.keys, logger, transactionOpts)
-	const signalRepository = makeSignalRepository({ creds, keys }, logger, pnFromLIDUSync)
+	const signalRepository = makeSignalRepository({ creds, keys })
 
 	let lastDateRecv: Date
 	let epoch = 1
@@ -885,9 +885,6 @@ export const makeSocket = (config: SocketConfig) => {
 				try {
 					const myPN = authState.creds.me!.id
 
-					// Store our own LID-PN mapping
-					await signalRepository.lidMapping.storeLIDPNMappings([{ lid: myLID, pn: myPN }])
-
 					// Create device list for our own user (needed for bulk migration)
 					const { user, device } = jidDecode(myPN)!
 					await authState.keys.set({
@@ -895,9 +892,6 @@ export const makeSocket = (config: SocketConfig) => {
 							[user]: [device?.toString() || '0']
 						}
 					})
-
-					// migrate our own session
-					await signalRepository.migrateSession(myPN, myLID)
 
 					logger.info({ myPN, myLID }, 'Own LID session created successfully')
 				} catch (error) {

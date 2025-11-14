@@ -1,7 +1,7 @@
 import { Boom } from '@hapi/boom'
 import { proto } from '../../WAProto/index.js'
 import type { WAMessage, WAMessageKey } from '../Types'
-import type { SignalRepositoryWithLIDStore } from '../Types/Signal'
+import type { SignalRepository } from '../Types/Signal'
 import {
 	areJidsSameUser,
 	type BinaryNode,
@@ -18,36 +18,6 @@ import {
 } from '../WABinary'
 import { unpadRandomMax16 } from './generics'
 import type { ILogger } from './logger'
-
-export const getDecryptionJid = async (sender: string, repository: SignalRepositoryWithLIDStore): Promise<string> => {
-	if (isLidUser(sender) || isHostedLidUser(sender)) {
-		return sender
-	}
-
-	const mapped = await repository.lidMapping.getLIDForPN(sender)
-	return mapped || sender
-}
-
-const storeMappingFromEnvelope = async (
-	stanza: BinaryNode,
-	sender: string,
-	repository: SignalRepositoryWithLIDStore,
-	decryptionJid: string,
-	logger: ILogger
-): Promise<void> => {
-	// TODO: Handle hosted IDs
-	const { senderAlt } = extractAddressingContext(stanza)
-
-	if (senderAlt && isLidUser(senderAlt) && isPnUser(sender) && decryptionJid === sender) {
-		try {
-			await repository.lidMapping.storeLIDPNMappings([{ lid: senderAlt, pn: sender }])
-			await repository.migrateSession(sender, senderAlt)
-			logger.debug({ sender, senderAlt }, 'Stored LID mapping from envelope')
-		} catch (error) {
-			logger.warn({ sender, senderAlt, error }, 'Failed to store LID mapping')
-		}
-	}
-}
 
 export const NO_MESSAGE_FOUND_ERROR_TEXT = 'Message absent from node'
 export const MISSING_KEYS_ERROR_TEXT = 'Key used already or never filled'
@@ -226,7 +196,7 @@ export const decryptMessageNode = (
 	stanza: BinaryNode,
 	meId: string,
 	meLid: string,
-	repository: SignalRepositoryWithLIDStore,
+	repository: SignalRepository,
 	logger: ILogger
 ) => {
 	const { fullMessage, author, sender } = decodeMessageNode(stanza, meId, meLid)
@@ -260,13 +230,6 @@ export const decryptMessageNode = (
 
 					let msgBuffer: Uint8Array
 
-					const decryptionJid = await getDecryptionJid(author, repository)
-
-					if (tag !== 'plaintext') {
-						// TODO: Handle hosted devices
-						await storeMappingFromEnvelope(stanza, author, repository, decryptionJid, logger)
-					}
-
 					try {
 						const e2eType = tag === 'plaintext' ? 'plaintext' : attrs.type
 
@@ -281,7 +244,7 @@ export const decryptMessageNode = (
 							case 'pkmsg':
 							case 'msg':
 								msgBuffer = await repository.decryptMessage({
-									jid: decryptionJid,
+									jid: author,
 									type: e2eType,
 									ciphertext: content
 								})

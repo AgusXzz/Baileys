@@ -89,6 +89,8 @@ export const areJidsSameUser = (jid1: string | undefined, jid2: string | undefin
 	jidDecode(jid1)?.user === jidDecode(jid2)?.user
 /** is the jid Meta AI */
 export const isJidMetaAI = (jid: string | undefined) => jid?.endsWith('@bot')
+/** is the jid a user */
+export const isJidUser = (jid: string | undefined) => jid?.endsWith('@s.whatsapp.net')
 /** is the jid a PN user */
 export const isPnUser = (jid: string | undefined) => jid?.endsWith('@s.whatsapp.net')
 /** is the jid a LID */

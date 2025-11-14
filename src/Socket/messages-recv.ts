@@ -420,25 +420,13 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const { account, signedPreKey, signedIdentityKey: identityKey } = authState.creds
 		const fromJid = node.attrs.from!
 
-		// Check if we should recreate the session
-		let shouldRecreateSession = false
-		let recreateReason = ''
-
 		if (enableAutoSessionRecreation && messageRetryManager) {
 			try {
 				// Check if we have a session with this JID
 				const sessionId = signalRepository.jidToSignalProtocolAddress(fromJid)
-				const hasSession = await signalRepository.validateSession(fromJid)
-				const result = messageRetryManager.shouldRecreateSession(fromJid, retryCount, hasSession.exists)
-				shouldRecreateSession = result.recreate
-				recreateReason = result.reason
-
-				if (shouldRecreateSession) {
-					logger.debug({ fromJid, retryCount, reason: recreateReason }, 'recreating session for retry')
 					// Delete existing session to force recreation
 					await authState.keys.set({ session: { [sessionId]: null } })
 					forceIncludeKeys = true
-				}
 			} catch (error) {
 				logger.warn({ error, fromJid }, 'failed to check session recreation')
 			}
@@ -502,7 +490,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 				receipt.attrs.participant = node.attrs.participant
 			}
 
-			if (retryCount > 1 || forceIncludeKeys || shouldRecreateSession) {
+			if (retryCount > 1 || forceIncludeKeys) {
 				const { update, preKeys } = await getNextPreKeys(authState, 1)
 
 				const [keyId] = Object.keys(preKeys)
@@ -950,23 +938,10 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		// prevents the first message decryption failure
 		const sendToAll = !jidDecode(participant)?.device
 
-		// Check if we should recreate session for this retry
-		let shouldRecreateSession = false
-		let recreateReason = ''
-
 		if (enableAutoSessionRecreation && messageRetryManager) {
 			try {
 				const sessionId = signalRepository.jidToSignalProtocolAddress(participant)
-
-				const hasSession = await signalRepository.validateSession(participant)
-				const result = messageRetryManager.shouldRecreateSession(participant, retryCount, hasSession.exists)
-				shouldRecreateSession = result.recreate
-				recreateReason = result.reason
-
-				if (shouldRecreateSession) {
-					logger.debug({ participant, retryCount, reason: recreateReason }, 'recreating session for outgoing retry')
 					await authState.keys.set({ session: { [sessionId]: null } })
-				}
 			} catch (error) {
 				logger.warn({ error, participant }, 'failed to check session recreation for outgoing retry')
 			}
@@ -977,8 +952,6 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		if (isJidGroup(remoteJid)) {
 			await authState.keys.set({ 'sender-key-memory': { [remoteJid]: null } })
 		}
-
-		logger.debug({ participant, sendToAll, shouldRecreateSession, recreateReason }, 'forced new session for retry recp')
 
 		for (const [i, msg] of msgs.entries()) {
 			if (!ids[i]) continue
@@ -1157,22 +1130,6 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 			author,
 			decrypt
 		} = decryptMessageNode(node, authState.creds.me!.id, authState.creds.me!.lid || '', signalRepository, logger)
-
-		const alt = msg.key.participantAlt || msg.key.remoteJidAlt
-		// store new mappings we didn't have before
-		if (!!alt) {
-			const altServer = jidDecode(alt)?.server
-			const primaryJid = msg.key.participant || msg.key.remoteJid!
-			if (altServer === 'lid') {
-				if (!(await signalRepository.lidMapping.getPNForLID(alt))) {
-					await signalRepository.lidMapping.storeLIDPNMappings([{ lid: alt, pn: primaryJid }])
-					await signalRepository.migrateSession(primaryJid, alt)
-				}
-			} else {
-				await signalRepository.lidMapping.storeLIDPNMappings([{ lid: primaryJid, pn: alt }])
-				await signalRepository.migrateSession(alt, primaryJid)
-			}
-		}
 
 		if (msg.key?.remoteJid && msg.key?.id && messageRetryManager) {
 			messageRetryManager.addRecentMessage(msg.key.remoteJid, msg.key.id, msg.message!)

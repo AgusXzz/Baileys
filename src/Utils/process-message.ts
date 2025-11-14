@@ -11,7 +11,6 @@ import type {
 	RequestJoinAction,
 	RequestJoinMethod,
 	SignalKeyStoreWithTransaction,
-	SignalRepositoryWithLIDStore,
 	WAMessage,
 	WAMessageKey
 } from '../Types'
@@ -40,7 +39,6 @@ type ProcessMessageContext = {
 	ev: BaileysEventEmitter
 	logger?: ILogger
 	options: RequestInit
-	signalRepository: SignalRepositoryWithLIDStore
 }
 
 const REAL_MSG_STUB_TYPES = new Set([
@@ -181,7 +179,6 @@ const processMessage = async (
 		placeholderResendCache,
 		ev,
 		creds,
-		signalRepository,
 		keyStore,
 		logger,
 		options
@@ -343,13 +340,6 @@ const processMessage = async (
 				for (const { pn, latestLid, assignedLid } of pnToLidMappings) {
 					const lid = latestLid || assignedLid
 					pairs.push({ lid: `${lid}@lid`, pn: `${pn}@s.whatsapp.net` })
-				}
-
-				await signalRepository.lidMapping.storeLIDPNMappings(pairs)
-				if (pairs.length) {
-					for (const { pn, lid } of pairs) {
-						await signalRepository.migrateSession(pn, lid)
-					}
 				}
 		}
 	} else if (content?.reactionMessage) {
