@@ -90,7 +90,7 @@ export const makeGroupsSocket = (config: SocketConfig) => {
         return await loadAllGroups()
     }
 
-    const resolveLidInGroups = (groups: any[], lid: string): string | undefined => {
+    const resolveLidInGroups = (groups: any[], lid: string) => {
         for (const group of groups) {
             const found = group.participants.find(
                  (p: any) => p.lid === lid || p.id === lid
