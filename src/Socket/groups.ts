@@ -77,15 +77,15 @@ export const makeGroupsSocket = (config: SocketConfig) => {
 		return data
 	}
 
-    const loadAllGroups = async (): Promise<GroupMetadata[]> => {
+    const loadAllGroups = async () => {
         const data = await groupFetchAllParticipating()
         const list = Object.values(data)
         groupCache.set('groups', list)
         return list
     }
 
-    const getAllGroups = async (): Promise<GroupMetadata[]> => {
-        const cached = groupCache.get<GroupMetadata[]>('groups')
+    const getAllGroups = async () => {
+        const cached = groupCache.get('groups')
         if (cached) return cached
         return await loadAllGroups()
     }
@@ -330,7 +330,7 @@ export const makeGroupsSocket = (config: SocketConfig) => {
             const normalized = jidNormalizedUser(jid)
             if (!isLidUser(normalized)) return normalized
 
-            const cached = lidCache.get<string>(normalized)
+            const cached = lidCache.get(normalized)
             if (cached) return cached
 
             let groups = await getAllGroups()
