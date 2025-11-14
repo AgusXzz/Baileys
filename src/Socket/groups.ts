@@ -1,3 +1,4 @@
+import NodeCache from '@cacheable/node-cache'
 import { proto } from '../../WAProto/index.js'
 import type { GroupMetadata, GroupParticipant, ParticipantAction, SocketConfig, WAMessageKey } from '../Types'
 import { WAMessageAddressingMode, WAMessageStubType } from '../Types'
@@ -13,6 +14,9 @@ import {
 	jidNormalizedUser
 } from '../WABinary'
 import { makeChatsSocket } from './chats'
+
+const groupCache = new NodeCache({ stdTTL: 600, useClones: false })
+const lidCache = new NodeCache({ stdTTL: 86400, useClones: false })
 
 export const makeGroupsSocket = (config: SocketConfig) => {
 	const sock = makeChatsSocket(config)
@@ -72,6 +76,31 @@ export const makeGroupsSocket = (config: SocketConfig) => {
 
 		return data
 	}
+
+    const loadAllGroups = async (): GroupMetadata[] => {
+        const data = await groupFetchAllParticipating()
+        const list = Object.values(data)
+        groupCache.set('groups', list)
+        return list
+    }
+
+    const getAllGroups = async (): GroupMetadata[] => {
+        const cached = groupCache.get('groups')
+        if (cached) return cached
+        return await loadAllGroups()
+    }
+
+    const resolveLidInGroups = (groups: GroupMetadata[], lid: string): string | undefined => {
+        for (const group of groups) {
+            const found = group.participants.find(
+                p => p.lid === lid || p.id === lid
+            )
+            if (found) {
+                return found?.phoneNumber || found.id
+            }
+        }
+        return undefined
+    }
 
 	sock.ws.on('CB:ib,,dirty', async (node: BinaryNode) => {
 		const { attrs } = getBinaryNodeChild(node, 'dirty')!
@@ -296,8 +325,29 @@ export const makeGroupsSocket = (config: SocketConfig) => {
 				{ tag: 'membership_approval_mode', attrs: {}, content: [{ tag: 'group_join', attrs: { state: mode } }] }
 			])
 		},
-		groupFetchAllParticipating
-	}
+		groupFetchAllParticipating,
+		getJid: async (jid: string) => {
+            const normalized = jidNormalizedUser(jid)
+            if (!isLidUser(normalized)) return normalized
+
+            const cached = lidCache.get < string > (normalized)
+            if (cached) return cached
+
+            let groups = await getAllGroups()
+            let real = resolveLidInGroups(groups, normalized)
+
+            if (!real) {
+                groups = await loadAllGroups()
+                real = resolveLidInGroups(groups, normalized)
+            }
+
+            if (!real) return normalized
+
+            lidCache.set(normalized, real)
+            return real
+        }
+
+    }
 }
 
 export const extractGroupMetadata = (result: BinaryNode) => {
