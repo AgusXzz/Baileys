@@ -11,6 +11,7 @@ import type {
 	RequestJoinAction,
 	RequestJoinMethod,
 	SignalKeyStoreWithTransaction,
+	SignalRepository,
 	WAMessage,
 	WAMessageKey
 } from '../Types'
@@ -39,6 +40,7 @@ type ProcessMessageContext = {
 	ev: BaileysEventEmitter
 	logger?: ILogger
 	options: RequestInit
+	signalRepository: SignalRepository
 }
 
 const REAL_MSG_STUB_TYPES = new Set([
@@ -179,6 +181,7 @@ const processMessage = async (
 		placeholderResendCache,
 		ev,
 		creds,
+		signalRepository,
 		keyStore,
 		logger,
 		options
