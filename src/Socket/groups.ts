@@ -79,21 +79,21 @@ export const makeGroupsSocket = (config: SocketConfig) => {
 
     const loadAllGroups = async () => {
         const data = await groupFetchAllParticipating()
-        const list = Object.values(data)
+        const list: any[] = Object.values(data)
         groupCache.set('groups', list)
         return list
     }
 
-    const getAllGroups = async () => {
+    const getAllGroups = async (): Promise < any[] > => {
         const cached = groupCache.get('groups')
-        if (cached) return cached
+        if (cached) return cached as any[]
         return await loadAllGroups()
     }
 
     const resolveLidInGroups = (groups: any[], lid: string) => {
         for (const group of groups) {
             const found = group.participants.find(
-                 (p: any) => p.lid === lid || p.id === lid
+                (p: any) => p.lid === lid || p.id === lid
             )
 
             if (found) {
@@ -102,6 +102,7 @@ export const makeGroupsSocket = (config: SocketConfig) => {
         }
         return undefined
     }
+
 
 	sock.ws.on('CB:ib,,dirty', async (node: BinaryNode) => {
 		const { attrs } = getBinaryNodeChild(node, 'dirty')!
