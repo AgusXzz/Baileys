@@ -93,8 +93,9 @@ export const makeGroupsSocket = (config: SocketConfig) => {
     const resolveLidInGroups = (groups: any[], lid: string): string | undefined => {
         for (const group of groups) {
             const found = group.participants.find(
-                p => p.lid === lid || p.id === lid
+                 (p: any) => p.lid === lid || p.id === lid
             )
+
             if (found) {
                 return found?.phoneNumber || found.id
             }
