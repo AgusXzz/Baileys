@@ -1080,11 +1080,11 @@ export const makeChatsSocket = (config: SocketConfig) => {
 				}
 			})(),
 			processMessage(msg, {
-				signalRepository,
 				shouldProcessHistoryMsg,
 				placeholderResendCache,
 				ev,
 				creds: authState.creds,
+				signalRepository,
 				keyStore: authState.keys,
 				logger,
 				options: config.options

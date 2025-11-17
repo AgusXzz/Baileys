@@ -96,12 +96,7 @@ export const downloadAndProcessHistorySyncNotification = async (
 	msg: proto.Message.IHistorySyncNotification,
 	options: RequestInit
 ) => {
-	let historyMsg: proto.HistorySync
-	if (msg.initialHistBootstrapInlinePayload) {
-		historyMsg = proto.HistorySync.decode(await inflatePromise(msg.initialHistBootstrapInlinePayload))
-	} else {
-		historyMsg = await downloadHistory(msg, options)
-	}
+	const historyMsg = await downloadHistory(msg, options)
 	return processHistoryMessage(historyMsg)
 }
 
