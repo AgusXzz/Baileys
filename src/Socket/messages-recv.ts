@@ -898,9 +898,6 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	const sendMessagesAgain = async (key: WAMessageKey, ids: string[], retryNode: BinaryNode) => {
 		const remoteJid = key.remoteJid!
 		const participant = key.participant || remoteJid
-
-		const retryCount = +retryNode.attrs.count! || 1
-
 		// Try to get messages from cache first, then fallback to getMessage
 		const msgs: (proto.IMessage | undefined)[] = []
 		for (const id of ids) {

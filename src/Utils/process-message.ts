@@ -36,11 +36,11 @@ type ProcessMessageContext = {
 	shouldProcessHistoryMsg: boolean
 	placeholderResendCache?: CacheStore
 	creds: AuthenticationCreds
+	signalRepository: SignalRepository
 	keyStore: SignalKeyStoreWithTransaction
 	ev: BaileysEventEmitter
 	logger?: ILogger
 	options: RequestInit
-	signalRepository: SignalRepository
 }
 
 const REAL_MSG_STUB_TYPES = new Set([

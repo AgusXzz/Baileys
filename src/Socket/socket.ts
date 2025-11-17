@@ -290,31 +290,6 @@ export const makeSocket = (config: SocketConfig) => {
 		}
 	}
 
-	const pnFromLIDUSync = async (jids: string[]): Promise<LIDMapping[] | undefined> => {
-		const usyncQuery = new USyncQuery().withLIDProtocol().withContext('background')
-
-		for (const jid of jids) {
-			if (isLidUser(jid)) {
-				logger?.warn('LID user found in LID fetch call')
-				continue
-			} else {
-				usyncQuery.withUser(new USyncUser().withId(jid))
-			}
-		}
-
-		if (usyncQuery.users.length === 0) {
-			return [] // return early without forcing an empty query
-		}
-
-		const results = await executeUSyncQuery(usyncQuery)
-
-		if (results) {
-			return results.list.filter(a => !!a.lid).map(({ lid, id }) => ({ pn: id, lid: lid as string }))
-		}
-
-		return []
-	}
-
 	const ev = makeEventBuffer(logger)
 
 	const { creds } = authState
