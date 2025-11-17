@@ -1036,7 +1036,8 @@ export const makeChatsSocket = (config: SocketConfig) => {
 
 		const historyMsg = getHistoryMsg(msg.message!)
 		const shouldProcessHistoryMsg = historyMsg
-			? shouldSyncHistoryMessage(historyMsg) && PROCESSABLE_HISTORY_TYPES.includes(historyMsg.syncType! as proto.HistorySync.HistorySyncType)
+			? shouldSyncHistoryMessage(historyMsg) &&
+				PROCESSABLE_HISTORY_TYPES.includes(historyMsg.syncType! as proto.HistorySync.HistorySyncType)
 			: false
 
 		// State machine: decide on sync and flush
@@ -1079,7 +1080,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 				}
 			})(),
 			processMessage(msg, {
-			    signalRepository,
+				signalRepository,
 				shouldProcessHistoryMsg,
 				placeholderResendCache,
 				ev,

@@ -294,7 +294,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		const result = await sock.executeUSyncQuery(query)
 
 		if (result) {
-
 			const extracted = extractDeviceJids(
 				result?.list,
 				authState.creds.me!.id,
@@ -389,9 +388,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 		if (jidsRequiringFetch.length) {
 			// LID if mapped, otherwise original
-			const wireJids = [
-				...jidsRequiringFetch.filter(jid => !!isLidUser(jid) || !!isHostedLidUser(jid))
-			]
+			const wireJids = [...jidsRequiringFetch.filter(jid => !!isLidUser(jid) || !!isHostedLidUser(jid))]
 
 			logger.debug({ jidsRequiringFetch, wireJids }, 'fetching sessions')
 			const result = await query({

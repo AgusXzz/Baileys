@@ -298,7 +298,7 @@ export const makeGroupsSocket = (config: SocketConfig) => {
 			])
 		},
 		groupFetchAllParticipating
-    }
+	}
 }
 
 export const extractGroupMetadata = (result: BinaryNode) => {

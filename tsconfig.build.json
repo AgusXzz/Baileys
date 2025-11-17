@@ -6,7 +6,12 @@
     "outDir": "lib",
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+
+    // FIX untuk error Baileys RC6
+    "skipLibCheck": true,
+    "emitDeclarationOnly": false,
+    "typeRoots": ["./node_modules/@types"]
   },
-  "exclude": ["node_modules","src/__tests__"]
+  "exclude": ["node_modules", "src/__tests__"]
 }

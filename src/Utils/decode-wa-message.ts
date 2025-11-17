@@ -243,7 +243,7 @@ export const decryptMessageNode = (
 								break
 							case 'pkmsg':
 							case 'msg':
-							    const user = isPnUser(sender) ? sender : author
+								const user = isPnUser(sender) ? sender : author
 								msgBuffer = await repository.decryptMessage({
 									jid: user,
 									type: e2eType,

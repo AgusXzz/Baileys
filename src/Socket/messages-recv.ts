@@ -424,9 +424,9 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 			try {
 				// Check if we have a session with this JID
 				const sessionId = signalRepository.jidToSignalProtocolAddress(fromJid)
-					// Delete existing session to force recreation
-					await authState.keys.set({ session: { [sessionId]: null } })
-					forceIncludeKeys = true
+				// Delete existing session to force recreation
+				await authState.keys.set({ session: { [sessionId]: null } })
+				forceIncludeKeys = true
 			} catch (error) {
 				logger.warn({ error, fromJid }, 'failed to check session recreation')
 			}
@@ -941,7 +941,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		if (enableAutoSessionRecreation && messageRetryManager) {
 			try {
 				const sessionId = signalRepository.jidToSignalProtocolAddress(participant)
-					await authState.keys.set({ session: { [sessionId]: null } })
+				await authState.keys.set({ session: { [sessionId]: null } })
 			} catch (error) {
 				logger.warn({ error, participant }, 'failed to check session recreation for outgoing retry')
 			}
