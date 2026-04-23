@@ -1067,17 +1067,17 @@ export const makeChatsSocket = (config: SocketConfig) => {
             const raw = msg.key.participant || msg.key.remoteJid;
     const alt = msg.key.participantAlt || msg.key.remoteJidAlt;
 
-    const pn = isPnUser(raw)
+    let pn = jidNormalizedUser(isPnUser(raw)
         ? raw
         : isPnUser(alt)
         ? alt
-        : undefined;
+        : undefined);
 
-    const lid = isLidUser(raw)
+    const lid = jidNormalizedUser(isLidUser(raw)
         ? raw
         : isLidUser(alt)
         ? alt
-        : undefined;
+        : undefined);
 
 			if (!msg.key.fromMe) {
 				ev.emit('contacts.update', [{ id: jid, lid, phoneNumber: pn, notify: msg.pushName, verifiedName: msg.verifiedBizName! }])
