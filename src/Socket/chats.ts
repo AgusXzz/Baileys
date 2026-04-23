@@ -48,6 +48,8 @@ import {
 	type BinaryNode,
 	getBinaryNodeChild,
 	getBinaryNodeChildren,
+	isLidUser,
+	isPnUser,
 	jidDecode,
 	jidNormalizedUser,
 	reduceBinaryNodeToDictionary,
@@ -1060,11 +1062,25 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		ev.emit('messages.upsert', { messages: [msg], type })
 
 		if (!!msg.pushName) {
-			let jid = msg.key.fromMe ? authState.creds.me!.id : msg.key.participant || msg.key.remoteJid
-			jid = jidNormalizedUser(jid!)
+			let jid = msg.key.fromMe ? authState.creds.me.id : msg.key.participant || msg.key.remoteJid;
+            jid = jidNormalizedUser(jid);
+            const raw = msg.key.participant || msg.key.remoteJid;
+    const alt = msg.key.participantAlt || msg.key.remoteJidAlt;
+
+    const pn = isPnUser(raw)
+        ? raw
+        : isPnUser(alt)
+        ? alt
+        : undefined;
+
+    const lid = isLidUser(raw)
+        ? raw
+        : isLidUser(alt)
+        ? alt
+        : undefined;
 
 			if (!msg.key.fromMe) {
-				ev.emit('contacts.update', [{ id: jid, notify: msg.pushName, verifiedName: msg.verifiedBizName! }])
+				ev.emit('contacts.update', [{ id: jid, lid, phoneNumber: pn, notify: msg.pushName, verifiedName: msg.verifiedBizName! }])
 			}
 
 			// update our pushname too
