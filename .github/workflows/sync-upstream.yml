@@ -13,30 +13,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Git
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Add Upstream
         run: |
           git remote add upstream https://github.com/WhiskeySockets/Baileys.git || true
           git fetch upstream
 
-      - name: Sync Upstream
+      - name: Merge Upstream
         run: |
-          BRANCH=$(git branch --show-current)
+          git checkout master
+          git merge upstream/master --no-edit || true
 
-          echo "Current branch: $BRANCH"
-
-          git merge upstream/$BRANCH --allow-unrelated-histories --no-edit || true
-
-      - name: Push Changes
+      - name: Push
         run: |
-          git push origin HEAD
+          git push origin master
