@@ -1,0 +1,42 @@
+name: Sync Upstream
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add Upstream
+        run: |
+          git remote add upstream https://github.com/WhiskeySockets/Baileys.git || true
+          git fetch upstream
+
+      - name: Sync Upstream
+        run: |
+          BRANCH=$(git branch --show-current)
+
+          echo "Current branch: $BRANCH"
+
+          git merge upstream/$BRANCH --allow-unrelated-histories --no-edit || true
+
+      - name: Push Changes
+        run: |
+          git push origin HEAD
